@@ -1,0 +1,120 @@
+# CVPPP Training Configuration
+# Instance segmentation with discriminative loss for plant leaf segmentation
+
+experiment_name: ariel_cvppp
+project_name: ariel-plant-segmentation
+seed: 42
+logger: tensorboard
+log_dir: logs
+
+# Data configuration
+data:
+  # Dataset type: cvppp14, cvppp15, cvppp17, cvppp_rl, cvppp_all (combined)
+  dataset: cvppp_all
+  # For combined dataset, specify paths to each dataset
+  data_roots:
+    cvppp14: data/CVPPP14
+    cvppp15: data/CVPPP15
+    cvppp17: data/CVPPP17
+    cvppp_rl: data/PPP_PRL
+  # Legacy single dataset path (for individual dataset training)
+  data_root: data/CVPPP14
+  batch_size: 8
+  num_workers: 0  # Set to 0 to avoid forkserver fd issues on Python 3.14
+  train_val_split: 0.2
+  cache_rate: 1.0  # Full caching since num_workers=0
+  pin_memory: true
+  # Image size for resizing (H, W) - null for original size
+  image_size: [512, 512]
+  # Crop size for random cropping during training
+  crop_size: [256, 256]
+  # Challenge type for CVPPP15/17: 'all', 'LCC', or 'LSC'
+  challenge: all
+
+# Model configuration
+model:
+  net_config:
+    # Input channels: 1 for grayscale, 3 for RGB
+    in_channels: 3
+    # Initial conv filters
+    init_filters: 64
+    # Backbone output feature dimension
+    feature_dim: 64
+    # Instance embedding dimension
+    emb_dim: 16
+    # Dropout probability
+    dropout: 0.2
+    # Encoder block depths
+    blocks_down: [1, 2, 2, 4]
+    # Decoder block depths
+    blocks_up: [1, 1, 1]
+  
+  # Optimizer configuration
+  optimizer:
+    lr: 0.0001
+    weight_decay: 0.0001
+    scheduler:
+      type: cosine
+      T_max: 100
+      eta_min: 0.000001
+
+# Loss configuration
+loss:
+  # Discriminative loss parameters
+  discriminative:
+    delta_var: 0.5
+    delta_dist: 1.5
+    norm: 2
+    alpha: 1.0  # Variance loss weight
+    beta: 1.0   # Distance loss weight
+    gamma: 0.001  # Regularization weight
+  # Semantic loss (cross-entropy) weight
+  semantic_weight: 1.0
+  # Instance loss (discriminative) weight
+  instance_weight: 1.0
+
+# Training configuration
+training:
+  max_epochs: 501
+  accelerator: gpu
+  devices: 1  # Single GPU (set to list like [0,1,2,3] for specific GPUs)
+  strategy: auto
+  precision: 32-true
+  gradient_clip_val: 1.0
+  accumulate_grad_batches: 1
+  val_check_interval: 1.0
+  check_val_every_n_epoch: 1
+  num_sanity_val_steps: 2
+  log_every_n_steps: 50
+  enable_progress_bar: true
+  enable_model_summary: true
+  deterministic: false
+  benchmark: true
+  fast_dev_run: false
+
+# Callbacks configuration
+callbacks:
+  checkpoint:
+    enabled: true
+    dirpath: checkpoints
+    filename: ariel-cvppp-{epoch:02d}-{val/loss:.4f}
+    save_top_k: 3
+    monitor: val/loss
+    mode: min
+    save_last: true
+  early_stopping:
+    enabled: true
+    patience: 20
+    monitor: val/loss
+    mode: min
+    min_delta: 0.0001
+  lr_monitor:
+    enabled: true
+  tensorboard_image:
+    enabled: true
+    log_every_n_steps: 200
+    log_every_n_epochs: 1
+    num_samples: 4
+    log_train: true
+    log_val: true
+

@@ -1,5 +1,12 @@
 data/**/*.h5
 data/**/*.tiff
+data/**/*.*
+
+scripts/**/*.*
+
+checkpoints/**/*.*
+logs/**/*.*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

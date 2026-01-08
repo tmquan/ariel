@@ -8,6 +8,64 @@ Foundation model based on Vista2D and Vista3D for connectomics data.
 pip install -r requirements.txt
 ```
 
+## Quick Start
+
+### Training
+
+```bash
+# Train with default configuration
+python code/main.py
+
+# Train with custom parameters
+python code/main.py data.batch_size=8 training.max_epochs=200
+
+# Multi-GPU training
+python code/main.py training.devices=4 training.strategy=ddp
+
+# Fast development run (test setup)
+python code/main.py training.fast_dev_run=True
+```
+
+### Configuration
+
+The project uses Hydra for configuration management. Main config file: `conf/config.yaml`
+
+**Key configuration options:**
+
+```yaml
+# Data
+data.batch_size: 4              # Batch size
+data.train_val_split: 0.2       # Train/validation split ratio
+data.cache_rate: 0.5            # Fraction of data to cache
+
+# Model
+model.net_config.init_filters: 32    # Initial filter count
+model.net_config.feature_dim: 64     # Feature dimension
+model.net_config.emb_dim: 16         # Embedding dimension
+
+# Training
+training.max_epochs: 100        # Maximum epochs
+training.accelerator: auto      # cpu, gpu, or auto
+training.devices: 1             # Number of devices
+training.precision: 32-true     # 32-true, 16-mixed, bf16-mixed
+```
+
+**Override any parameter from command line:**
+
+```bash
+python code/main.py model.net_config.init_filters=64 training.max_epochs=150
+```
+
+### Hyperparameter Sweeps
+
+```bash
+# Run sweep over multiple embedding dimensions
+python code/main.py --multirun model.net_config.emb_dim=8,16,32,64
+
+# Sweep over learning rates and batch sizes
+python code/main.py --multirun model.optimizer.lr=1e-3,1e-4,1e-5 data.batch_size=4,8,16
+```
+
 ## Datasets
 
 ### SNEMI3D Dataset

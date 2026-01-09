@@ -62,6 +62,7 @@ model:
 loss:
   # Discriminative loss parameters
   discriminative:
+    _target_: losses.discriminative.DiscriminativeLossVectorized
     delta_var: 0.5
     delta_dist: 1.5
     norm: 2

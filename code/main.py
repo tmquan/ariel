@@ -69,7 +69,7 @@ from loader.datamodule import (
     CVPPPRLDataModule,
     CombinedCVPPPDataModule,
 )
-from losses.discriminative import DiscriminativeLoss
+import importlib
 from callbacks.tensorboard_image import TensorBoardImageCallback
 from utils.clustering import cluster_embeddings, compute_instance_metrics
 
@@ -101,16 +101,13 @@ class ArielLightningModule(pl.LightningModule):
         self.loss_config = loss_config
         
         # Loss functions
-        # Discriminative loss for instance embeddings
-        disc_cfg = loss_config.get('discriminative', {})
-        self.discriminative_loss = DiscriminativeLoss(
-            delta_var=disc_cfg.get('delta_var', 0.5),
-            delta_dist=disc_cfg.get('delta_dist', 1.5),
-            norm=disc_cfg.get('norm', 2),
-            alpha=disc_cfg.get('alpha', 1.0),
-            beta=disc_cfg.get('beta', 1.0),
-            gamma=disc_cfg.get('gamma', 0.001),
-        )
+        # Discriminative loss for instance embeddings (instantiate from config _target_)
+        disc_cfg = dict(loss_config.get('discriminative', {}))
+        target = disc_cfg.pop('_target_', 'losses.discriminative.DiscriminativeLossVectorized')
+        module_name, class_name = target.rsplit('.', 1)
+        module = importlib.import_module(module_name)
+        DiscLossClass = getattr(module, class_name)
+        self.discriminative_loss = DiscLossClass(**disc_cfg)
         
         # Cross-entropy loss for semantic segmentation (fg/bg)
         self.semantic_loss = nn.CrossEntropyLoss()

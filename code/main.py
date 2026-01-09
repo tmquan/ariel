@@ -710,8 +710,15 @@ def main(cfg: DictConfig):
     print("Starting Training")
     print("=" * 60 + "\n")
     
+    # Check for checkpoint resumption
+    ckpt_path = training_cfg.get('resume_from_checkpoint', None)
+    if ckpt_path:
+        print(f"    Resuming from: {ckpt_path}")
+    else:
+        print("    Starting fresh (no checkpoint resumption)")
+    
     try:
-        trainer.fit(model, datamodule)
+        trainer.fit(model, datamodule, ckpt_path=ckpt_path)
     except KeyboardInterrupt:
         print("\n\nTraining interrupted by user")
     except Exception as e:

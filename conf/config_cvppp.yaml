@@ -92,6 +92,8 @@ training:
   deterministic: false
   benchmark: true
   fast_dev_run: false
+  # Resume from checkpoint (set to path to resume, null to start fresh)
+  resume_from_checkpoint: null
 
 # Callbacks configuration
 callbacks:
